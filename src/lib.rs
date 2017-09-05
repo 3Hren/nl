@@ -7,13 +7,13 @@ pub mod serialize;
 
 pub use self::serialize::NetlinkSerializer;
 
-#[derive(Default, Serialize)]
+#[derive(Debug, Default, Serialize)]
 pub struct ControlAttributes<'a> {
     family_id: Option<u16>,
     family_name: Option<&'a str>,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub enum ControlMessage<'a> {
     /// Returned in response to a `GetFamily` request.
     NewFamily(ControlAttributes<'a>),
