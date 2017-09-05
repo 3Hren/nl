@@ -8,3 +8,4 @@ description = "Linux nelink native binding (project in active development, just 
 [dependencies]
 byteorder = "1"
 serde = "1"
+serde_derive = "1"

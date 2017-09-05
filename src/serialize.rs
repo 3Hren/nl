@@ -2,11 +2,20 @@ use std::error;
 use std::fmt::{self, Display, Formatter};
 use std::io::{self, ErrorKind, Write};
 
+use byteorder::{NativeEndian, WriteBytesExt};
+
+
 use serde::{Serialize, Serializer, ser};
 
 #[derive(Debug)]
 pub struct Error {
     inner: io::Error,
+}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Self { inner: err }
+    }
 }
 
 impl Display for Error {
@@ -37,7 +46,17 @@ impl ser::Error for Error {
 }
 
 pub struct NetlinkSerializer<W> {
-    inner: W,
+    wr: W,
+}
+
+impl<W: Write> NetlinkSerializer<W> {
+    pub fn new(wr: W) -> Self {
+        Self { wr }
+    }
+
+    pub fn into_inner(self) -> W {
+        self.wr
+    }
 }
 
 impl<'a, W: Write> Serializer for &'a mut NetlinkSerializer<W> {
@@ -133,9 +152,13 @@ impl<'a, W: Write> Serializer for &'a mut NetlinkSerializer<W> {
         unimplemented!()
     }
 
-    fn serialize_newtype_variant<T: ? Sized>(self, name: &'static str, variant_index: u32, variant: &'static str, value: &T) -> Result<Self::Ok, Self::Error> where
-        T: Serialize {
-        unimplemented!()
+    fn serialize_newtype_variant<T: ? Sized>(self, _name: &'static str, idx: u32, _variant: &'static str, value: &T) -> Result<Self::Ok, Self::Error>
+    where
+        T: Serialize
+    {
+        let ty = idx + 1;
+        self.wr.write_u8(ty as u8)?;
+        value.serialize(self)
     }
 
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
